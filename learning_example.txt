@@ -1,0 +1,89 @@
+import random
+
+crds = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
+
+def get_crd():
+    return random.choice(crds)
+
+def get_init_gme_state():
+    return {'dlr': [get_crd()], 'plyr': [get_crd()]}
+
+def get_score(hand):
+    score = sum(hand)
+    while 11 in hand and score > 21:
+        replace_ace_idx = hand.index(11)
+        hand = hand[:replace_ace_idx] + [1] + hand[replace_ace_idx+1:]
+        score = sum(hand)
+    return score
+
+def is_bust(score):
+    return score > 21
+
+def is_blkjck(hand):
+    return get_score(hand) == 21 and len(hand) == 2
+
+def print_gme_state(gme_state):
+    print(f'dlr score: {get_score(gme_state['dlr'])}; crds: ', gme_state['dlr'])
+    print(f'plyr score: {get_score(gme_state['plyr'])}; crds: ', gme_state['plyr'], '\n')
+
+def start_gme():
+    play_another_gme = True
+
+    while play_another_gme:
+        print('\nStarting blkjck ;-)\n')
+        gme_state = get_init_gme_state()
+        play_another_plyr_hit = True
+        plyr_has_blkjck = False
+
+        while play_another_plyr_hit:
+            gme_state['plyr'].append(get_crd())
+            print_gme_state(gme_state)
+
+            # Did the plyr bust?
+            if is_bust(get_score(gme_state['plyr'])):
+                print('Bust! You lose')
+                play_another_plyr_hit = False
+            else:
+                if is_blkjck(gme_state['plyr']):
+                    plyr_has_blkjck = True
+                else:
+                    hit_or_stand = input("Hit (H) or Stand (S)?")
+                    if hit_or_stand.upper() == 'H':
+                        continue
+
+                # If here, then the user has blkjck or opted to stand
+                play_another_plyr_hit = False
+                play_another_dlr_hit = True
+                plyr_score = get_score(gme_state['plyr'])
+
+                while play_another_dlr_hit:
+                    gme_state['dlr'].append(get_crd())
+                    print_gme_state(gme_state)
+                    dlr_score = get_score(gme_state['dlr'])
+
+                    # Did the dlr bust?
+                    if is_bust(dlr_score):
+                        print('dlr Bust! You win')
+                        play_another_dlr_hit = False
+                    elif plyr_has_blkjck:
+                        if is_blkjck(gme_state['dlr']):
+                            print('You both got blkjck! But rules say the dlr won!')
+                        else:
+                            print('You got blkjck! You automatically win!')
+                        play_another_dlr_hit = False
+                    elif dlr_score > 16:
+                        if dlr_score > plyr_score:
+                            print('dlr Wins!')
+                        elif plyr_score > dlr_score:
+                            print('You Win!')
+                        else:
+                            print('You both tie!')
+                        play_another_dlr_hit = False
+
+        play_another_gme_input = input("Play again? (Y/N): ")
+        if play_another_gme_input.upper() != 'Y':
+            play_another_gme = False
+            print('Goodbye!')
+
+if __name__ == '__main__':
+    start_gme()
